@@ -12,7 +12,7 @@ abstract class Packet {
   }
 }
 
-abstract class RCS380Packet extends Packet {
+abstract class RCS300Packet extends Packet {
   protected constructor(readonly payload: Uint8Array) {
     super(payload);
   }
@@ -45,7 +45,7 @@ export class AckPacket extends Packet {
   }
 }
 
-export class SendPacket extends RCS380Packet {
+export class SendPacket extends RCS300Packet {
   constructor(data: Uint8Array, seqNumber: number) {
     const header = Uint8Array.of(0x6b);
     const dataLength_ = data.byteLength.asLittleEndian();
@@ -72,7 +72,7 @@ export class SendPacket extends RCS380Packet {
   }
 }
 
-export class ReceivedPacket extends RCS380Packet {
+export class ReceivedPacket extends RCS300Packet {
   constructor(payload: Uint8Array) {
     super(payload);
   }
