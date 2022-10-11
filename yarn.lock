@@ -1848,6 +1848,11 @@
   dependencies:
     source-map "^0.6.1"
 
+"@types/w3c-web-usb@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@types/w3c-web-usb/-/w3c-web-usb-1.0.6.tgz#5d8560d0d9f585ffc80865bc773db7bc975b680c"
+  integrity sha512-cSjhgrr8g4KbPnnijAr/KJDNKa/bBa+ixYkywFRvrhvi9n1WEl7yYbtRyzE6jqNQiSxxJxoAW3STaOQwJHndaw==
+
 "@types/webpack-sources@*":
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/@types/webpack-sources/-/webpack-sources-2.1.0.tgz#8882b0bd62d1e0ce62f183d0d01b72e6e82e8c10"
@@ -8938,6 +8943,11 @@ raw-body@2.4.0:
     http-errors "1.7.2"
     iconv-lite "0.4.24"
     unpipe "1.0.0"
+
+rc_s380_driver@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/rc_s380_driver/-/rc_s380_driver-1.0.5.tgz#f0db93891bd5d9e9dbb8126e245bb2464622437a"
+  integrity sha512-Dpnjo1L1NaJeLTtdI+G5NPOmsFPLcrLfRKTIK1eU5S7Xgv3EhPZR/xkk+wkQK9IyoYfe3JuPOYBoy2PURTVblQ==
 
 react-app-polyfill@^2.0.0:
   version "2.0.0"
