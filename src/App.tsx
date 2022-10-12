@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useFelica } from "./useFecica";
 import { useFelica2 } from "./useFecica2";
 
 const sleep = (ms = 3000) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function App() {
+  const [status, setStatus] = useState("");
+
   const { initDevice, getIDm, getStudentId } = useFelica();
   const {
     initDevice: initDevice2,
@@ -35,8 +38,6 @@ export default function App() {
 
       break;
     }
-
-    device.disconnect();
   };
 
   const handleRCS300 = async () => {
@@ -45,7 +46,7 @@ export default function App() {
     while (true) {
       const idm = await getIDm(device);
       if (idm.byteLength === 0) {
-        await sleep(200);
+        await sleep(1000);
         continue;
       }
 
@@ -63,15 +64,39 @@ export default function App() {
 
       break;
     }
-
-    device.disconnect();
   };
 
   return (
     <div className="App">
       <h1>Hello CodeSandbox</h1>
-      <button onClick={handleRCS380}>RCS380</button>
-      <button onClick={handleRCS300}>RCS300</button>
+      <h2>{status}</h2>
+      <button
+        onClick={async () => {
+          try {
+            setStatus("読み取り中");
+            await handleRCS380();
+          } catch (e) {
+            setStatus("エラー");
+            throw e;
+          }
+        }}
+      >
+        RCS380
+      </button>
+      <button
+        onClick={async () => {
+          try {
+            setStatus("読み取り中");
+            await handleRCS300();
+            setStatus("");
+          } catch (e) {
+            setStatus("エラー");
+            throw e;
+          }
+        }}
+      >
+        RCS300
+      </button>
     </div>
   );
 }
