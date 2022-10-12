@@ -1,6 +1,8 @@
 import { useFelica } from "./useFecica";
 import { useFelica2 } from "./useFecica2";
 
+const sleep = (ms = 3000) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export default function App() {
   const { initDevice, getIDm, getStudentId } = useFelica();
   const {
@@ -11,18 +13,57 @@ export default function App() {
 
   const handleRCS380 = async () => {
     const device = await initDevice2();
-    const idm = await getIDm2(device);
-    console.log(idm);
-    const stid = await getStudentId2(device, idm);
-    console.log(stid);
+
+    while (true) {
+      const idm = await getIDm2(device);
+      if (idm.byteLength === 0) {
+        await sleep(200);
+        continue;
+      }
+
+      if (idm.byteLength !== 8) {
+        console.log("IDmの読み取りに失敗しました");
+        break;
+      }
+
+      const stid = await getStudentId2(device, idm);
+      if (stid !== "") {
+        alert(stid);
+      } else {
+        alert("読み取りに失敗しました");
+      }
+
+      break;
+    }
+
+    device.disconnect();
   };
 
   const handleRCS300 = async () => {
     const device = await initDevice();
-    const idm = await getIDm(device);
-    console.log(idm);
-    const stid = await getStudentId(device, idm);
-    console.log(stid);
+
+    while (true) {
+      const idm = await getIDm(device);
+      if (idm.byteLength === 0) {
+        await sleep(200);
+        continue;
+      }
+
+      if (idm.byteLength !== 8) {
+        console.log("IDmの読み取りに失敗しました");
+        break;
+      }
+
+      const stid = await getStudentId(device, idm);
+      if (stid !== "") {
+        alert(stid);
+      } else {
+        alert("読み取りに失敗しました");
+      }
+
+      break;
+    }
+
     device.disconnect();
   };
 
