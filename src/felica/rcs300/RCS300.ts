@@ -1,3 +1,4 @@
+import { FelicaReader } from "../FelicaReader";
 import {
   AckPacket,
   FelicaReceivedPacket,
@@ -5,10 +6,30 @@ import {
   SendPacket,
 } from "./RCS300Packet";
 
-export class RCS300 {
+const START_TRANSPARENT_SESSION_TAG = 129;
+const END_TRANSPARENT_SESSION_TAG = 130;
+const TURN_OFF_THE_RF_TAG = 131;
+const TURN_ON_THE_RF_TAG = 132;
+const TRANSMISSION_AND_RECEPTION_FLAG_TAG = 144;
+const TRANSMISSION_BIT_FRAMING_TAG = 145;
+const RECEPTION_BIT_FRAMING = 146;
+const TRANMIT_TAG = 147;
+const RECEIVE_TAG = 148;
+const TRANSCEIVE_TAG = 149;
+const RESPONSE_STATUS_TAG = 150;
+const RESPONSE_DATA_TAG = 151;
+const SWITCH_PROTOCOL_TAG = 143;
+
+const sleep = async (e: number) => {
+  return new Promise((r, t) => {
+    setTimeout(r, e);
+  });
+};
+
+export class RCS300 extends FelicaReader {
   static readonly vendorId = 0x054c; // SONY
-  static readonly productId1 = 0xdc8; // SONY PaSoRi RC-S300/S
-  static readonly productId2 = 0xdc9; // SONY PaSoRi RC-S300/P
+  static readonly productId_S = 0xdc8; // SONY PaSoRi RC-S300/S
+  static readonly productId_P = 0xdc9; // SONY PaSoRi RC-S300/P
   static readonly interfaceNum = 1;
   static readonly endpointNumber = 2;
 
@@ -21,14 +42,16 @@ export class RCS300 {
 
   public seqNumber = 0;
 
-  public constructor(readonly device: USBDevice) {}
+  public constructor(readonly device: USBDevice) {
+    super(device);
+  }
 
   public static async connect(): Promise<RCS300> {
     // RC-S300を特定
     const options: USBDeviceRequestOptions = {
       filters: [
-        { vendorId: RCS300.vendorId, productId: RCS300.productId1 },
-        { vendorId: RCS300.vendorId, productId: RCS300.productId2 },
+        { vendorId: RCS300.vendorId, productId: RCS300.productId_S },
+        { vendorId: RCS300.vendorId, productId: RCS300.productId_P },
       ],
     };
     // デバイスを開いてインターフェースに接続
@@ -77,6 +100,23 @@ export class RCS300 {
     );
   }
 
+  private async sendCommand(
+    command: Uint8Array,
+    params: Uint8Array = new Uint8Array()
+  ) {
+    const commandHeader = [0xff, 0x50, 0x00, 0x00];
+    const length = command.length;
+
+    const payload = Uint8Array.of(
+      ...commandHeader,
+      length,
+      ...command,
+      0x0,
+      ...params
+    );
+    return await this.sendCommandAndReceiveResult(payload);
+  }
+
   private async sendCommandAndReceiveResult(
     rawCommand: Uint8Array
   ): Promise<ReceivedPacket> {
@@ -87,52 +127,36 @@ export class RCS300 {
 
   public async endTransparentSession() {
     // トランスペアレントセッションの終了
-    const endTransparent = new Uint8Array([
-      0xff, 0x50, 0x00, 0x00, 0x02, 0x82, 0x00, 0x00,
-    ]);
-
-    return await this.sendCommandAndReceiveResult(endTransparent);
+    return await this.sendCommand(
+      Uint8Array.of(END_TRANSPARENT_SESSION_TAG, 0x0)
+    );
   }
 
   public async startTransparentSession() {
     // トランスペアレントセッションの開始
-    const startransparent = new Uint8Array([
-      0xff, 0x50, 0x00, 0x00, 0x02, 0x81, 0x00, 0x00,
-    ]);
-
-    return await this.sendCommandAndReceiveResult(startransparent);
+    return await this.sendCommand(
+      Uint8Array.of(START_TRANSPARENT_SESSION_TAG, 0x0)
+    );
   }
 
   public async turnOffRf() {
     // RFのソフトパワーダウン
-    const turnOff = Uint8Array.of(
-      0xff,
-      0x50,
-      0x00,
-      0x00,
-      0x02,
-      0x83,
-      0x00,
-      0x00
-    );
-
-    return await this.sendCommandAndReceiveResult(turnOff);
+    const res = await this.sendCommand(Uint8Array.of(TURN_OFF_THE_RF_TAG, 0x0));
+    await sleep(30);
+    return res;
   }
 
   public async turnOnRf() {
     // RFのソフトパワーアップ
-    const turnOn = Uint8Array.of(
-      0xff,
-      0x50,
-      0x00,
-      0x00,
-      0x02,
-      0x84,
-      0x00,
-      0x00
-    );
+    const res = await this.sendCommand(Uint8Array.of(TURN_ON_THE_RF_TAG, 0x0));
+    await sleep(30);
+    return res;
+  }
 
-    return await this.sendCommandAndReceiveResult(turnOn);
+  public async switchProtocolTypeF() {
+    return await this.sendCommandAndReceiveResult(
+      Uint8Array.of(0xff, 0x50, 0x00, 0x02, 0x04, 0x8f, 0x02, 0x03, 0x00, 0x00)
+    );
   }
 
   public async communicateThruEX(command: Uint8Array) {
@@ -162,6 +186,7 @@ export class RCS300 {
     );
     const felicaFooter = Uint8Array.of(0x95, 0x82);
 
+    await this.switchProtocolTypeF();
     const response = await this.communicateThruEX(
       Uint8Array.of(
         ...felicaHeader,
